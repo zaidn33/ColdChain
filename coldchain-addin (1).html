@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColdChain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  #coldchain *, #coldchain *::before, #coldchain *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  #coldchain {
+    --bg:        #f4f7fb;
+    --panel:     #ffffff;
+    --panel-2:   #f1f5fa;
+    --border:    #e2e9f1;
+    --border-lit:#cdd9e6;
+    --text:      #16243a;
+    --muted:     #5d6e84;
+    --faint:     #93a2b5;
+    --blue:      #2563eb;
+    --blue-dk:   #1d4ed8;
+    --blue-soft: #eaf1fe;
+    --excursion: #dc2638;
+    --excursion-bg: #fdeaec;
+    --warning:   #e06a16;
+    --warning-bg:#fdf0e4;
+    --safe:      #128a5e;
+    --safe-bg:   #e3f5ec;
+    --nodata:    #6b7a8d;
+    --nodata-bg: #eef2f6;
+    --mono: 'IBM Plex Mono', monospace;
+    --head: 'Chakra Petch', sans-serif;
+    --body: 'Inter', sans-serif;
+    background: var(--bg); color: var(--text); font-family: var(--body);
+    font-size: 15px; -webkit-font-smoothing: antialiased;
+    min-height: 100%; display: block;
+  }
+
+  #coldchain .wrap { padding: 1.5rem 1.5rem 2.5rem; max-width: 1480px; margin: 0 auto; }
+
+  #coldchain .pagehead { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  #coldchain .pagehead h1 { font-family: var(--head); font-weight: 700; font-size: 1.4rem; letter-spacing: 0.04em; }
+  #coldchain .pagehead h1 span { color: var(--blue); }
+  #coldchain .pagehead .sub { font-family: var(--mono); font-size: 0.66rem; color: var(--faint); letter-spacing: 0.16em; text-transform: uppercase; }
+  #coldchain .pagehead .spacer { flex: 1; }
+  #coldchain .status-pill { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--safe); padding: 0.32rem 0.7rem; border-radius: 999px; background: var(--safe-bg); border: 1px solid rgba(18,138,94,0.25); }
+  #coldchain .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--safe); }
+  #coldchain .dot.pulse { animation: ccpulse 1.6s ease-in-out infinite; }
+  @keyframes ccpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(18,138,94,0.45); } 50% { box-shadow: 0 0 0 5px rgba(18,138,94,0); } }
+  #coldchain .clock { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); letter-spacing: 0.04em; }
+
+  #coldchain .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.9rem; margin-bottom: 1.1rem; }
+  #coldchain .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 0.95rem 1.05rem; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(22,36,58,0.04); }
+  #coldchain .kpi::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--blue); }
+  #coldchain .kpi.c-safe::before { background: var(--safe); }
+  #coldchain .kpi.c-warn::before { background: var(--warning); }
+  #coldchain .kpi.c-exc::before  { background: var(--excursion); }
+  #coldchain .kpi.c-nd::before   { background: var(--nodata); }
+  #coldchain .kpi .label { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  #coldchain .kpi .val { font-family: var(--head); font-weight: 700; font-size: 2rem; line-height: 1.1; margin-top: 0.35rem; font-variant-numeric: tabular-nums; }
+  #coldchain .kpi.c-safe .val { color: var(--safe); }
+  #coldchain .kpi.c-warn .val { color: var(--warning); }
+  #coldchain .kpi.c-exc .val  { color: var(--excursion); }
+  #coldchain .kpi.c-nd .val   { color: var(--nodata); }
+  #coldchain .kpi .trend { font-family: var(--mono); font-size: 0.66rem; color: var(--faint); margin-top: 0.3rem; letter-spacing: 0.04em; }
+
+  #coldchain .cols { display: grid; grid-template-columns: 1.9fr 1fr; gap: 0.9rem; align-items: start; }
+
+  #coldchain .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(22,36,58,0.04); }
+  #coldchain .panel + .panel { margin-top: 0.9rem; }
+  #coldchain .panel-head { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1.05rem; border-bottom: 1px solid var(--border); }
+  #coldchain .panel-head h2 { font-family: var(--head); font-size: 0.82rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  #coldchain .panel-head .count { font-family: var(--mono); font-size: 0.65rem; color: var(--faint); letter-spacing: 0.08em; }
+  #coldchain .panel-head .right { margin-left: auto; display: flex; gap: 0.6rem; align-items: center; }
+  #coldchain .live-tag { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.16em; color: var(--blue); display: inline-flex; align-items: center; gap: 0.35rem; }
+  #coldchain .live-tag .dot { background: var(--blue); }
+  #coldchain .live-tag .dot.pulse { animation: ccpulseblue 1.6s ease-in-out infinite; }
+  @keyframes ccpulseblue { 0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); } 50% { box-shadow: 0 0 0 5px rgba(37,99,235,0); } }
+
+  #coldchain .search { font-family: var(--body); font-size: 0.74rem; padding: 0.35rem 0.6rem; border: 1px solid var(--border-lit); border-radius: 7px; background: var(--panel); color: var(--text); width: 150px; outline: none; }
+  #coldchain .search:focus { border-color: var(--blue); }
+
+  #coldchain .feed-wrap { max-height: 560px; overflow-y: auto; }
+  #coldchain .feed-wrap::-webkit-scrollbar { width: 8px; }
+  #coldchain .feed-wrap::-webkit-scrollbar-thumb { background: var(--border-lit); border-radius: 8px; }
+  #coldchain table { width: 100%; border-collapse: collapse; }
+  #coldchain thead th { position: sticky; top: 0; background: var(--panel-2); z-index: 2; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0.55rem 1.05rem; border-bottom: 1px solid var(--border); font-weight: 500; }
+  #coldchain tbody td { padding: 0.62rem 1.05rem; border-bottom: 1px solid var(--border); font-size: 0.78rem; vertical-align: middle; }
+  #coldchain tbody tr { transition: background 0.15s; }
+  #coldchain tbody tr:hover { background: var(--blue-soft); }
+
+  #coldchain .veh { font-weight: 600; }
+  #coldchain .veh small { display: block; color: var(--faint); font-size: 0.66rem; font-family: var(--mono); font-weight: 400; margin-top: 1px; }
+  #coldchain .cargo { font-size: 0.74rem; }
+  #coldchain .cargo small { display: block; color: var(--faint); font-size: 0.64rem; margin-top: 1px; }
+  #coldchain .temp { font-family: var(--mono); font-size: 0.92rem; font-weight: 600; }
+  #coldchain .temp.over { color: var(--excursion); }
+  #coldchain .temp.warn { color: var(--warning); }
+  #coldchain .temp.ok   { color: var(--safe); }
+  #coldchain .range { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+  #coldchain .updated { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+
+  #coldchain .pill { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.25rem 0.55rem; border-radius: 6px; white-space: nowrap; }
+  #coldchain .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  #coldchain .pill.exc  { color: var(--excursion); background: var(--excursion-bg); }
+  #coldchain .pill.warn { color: var(--warning); background: var(--warning-bg); }
+  #coldchain .pill.safe { color: var(--safe); background: var(--safe-bg); }
+  #coldchain .pill.nd   { color: var(--nodata); background: var(--nodata-bg); }
+
+  #coldchain .action-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.05rem; border-bottom: 1px solid var(--border); }
+  #coldchain .action-row:last-child { border-bottom: none; }
+  #coldchain .action-row .ico { width: 30px; height: 30px; flex: none; border-radius: 8px; display: grid; place-items: center; background: var(--excursion-bg); color: var(--excursion); }
+  #coldchain .action-row .info { flex: 1; }
+  #coldchain .action-row .info b { font-size: 0.8rem; }
+  #coldchain .action-row .info small { display: block; font-family: var(--mono); font-size: 0.66rem; color: var(--muted); margin-top: 2px; }
+  #coldchain .action-row .btn { font-family: var(--head); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; background: var(--blue); border: none; border-radius: 7px; padding: 0.45rem 0.7rem; cursor: pointer; white-space: nowrap; }
+  #coldchain .action-row .btn:hover { background: var(--blue-dk); }
+  #coldchain .empty { padding: 1.4rem 1.05rem; text-align: center; font-family: var(--mono); font-size: 0.7rem; color: var(--faint); letter-spacing: 0.06em; }
+
+  #coldchain .gauge-body { padding: 1.1rem; text-align: center; }
+  #coldchain .arc { position: relative; width: 170px; height: 95px; margin: 0.3rem auto 0; }
+  #coldchain .arc svg { width: 100%; height: 100%; }
+  #coldchain .arc-readout { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; }
+  #coldchain .arc-readout .lvl { font-family: var(--head); font-weight: 700; font-size: 1.5rem; color: var(--safe); line-height: 1; }
+  #coldchain .arc-readout .cap { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+  #coldchain .arc-scale { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.55rem; color: var(--faint); letter-spacing: 0.08em; padding: 0.4rem 0.5rem 0; }
+
+  #coldchain .bars { padding: 0.9rem 1.05rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  #coldchain .bar-row { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem 0.6rem; align-items: center; }
+  #coldchain .bar-row .name { font-size: 0.74rem; }
+  #coldchain .bar-row .num { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+  #coldchain .bar-track { grid-column: 1 / -1; height: 6px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  #coldchain .bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(.2,.7,.3,1); }
+
+  #coldchain .spark { padding: 1rem 1.05rem 1.2rem; }
+  #coldchain .spark canvas { width: 100%; height: 70px; display: block; }
+  #coldchain .spark .legend { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.58rem; color: var(--faint); letter-spacing: 0.08em; margin-top: 0.5rem; }
+
+  #coldchain .foot { margin-top: 1.4rem; text-align: center; font-family: var(--mono); font-size: 0.62rem; color: var(--faint); letter-spacing: 0.12em; }
+
+  @media (max-width: 1100px) { #coldchain .kpis { grid-template-columns: repeat(2, 1fr); } #coldchain .cols { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { #coldchain .dot.pulse { animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div id="coldchain">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <h1>Cold<span>Chain</span></h1>
+      <div class="sub">Fleet Temperature Tracking</div>
+      <div class="spacer"></div>
+      <span class="status-pill"><span class="dot pulse"></span> Fleet Online</span>
+      <div class="clock" id="cc-clock">--:--:--</div>
+    </div>
+
+    <section class="kpis">
+      <div class="kpi"><div class="label">Vehicles Tracked</div><div class="val" id="cc-k-total">0</div><div class="trend">live temperature probes</div></div>
+      <div class="kpi c-safe"><div class="label">In Range</div><div class="val" id="cc-k-safe">0</div><div class="trend">within target band</div></div>
+      <div class="kpi c-warn"><div class="label">Warning</div><div class="val" id="cc-k-warn">0</div><div class="trend">drifting toward limit</div></div>
+      <div class="kpi c-exc"><div class="label">Excursion</div><div class="val" id="cc-k-exc">0</div><div class="trend">out of range now</div></div>
+      <div class="kpi c-nd"><div class="label">No Signal</div><div class="val" id="cc-k-nd">0</div><div class="trend">probe offline</div></div>
+    </section>
+
+    <div class="cols">
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Fleet Temperatures</h2>
+            <span class="count" id="cc-rowcount">&mdash; units</span>
+            <div class="right">
+              <input class="search" id="cc-search" type="text" placeholder="Search vehicle / cargo">
+              <span class="live-tag"><span class="dot pulse"></span> Live</span>
+            </div>
+          </div>
+          <div class="feed-wrap">
+            <table>
+              <thead><tr>
+                <th>Vehicle</th><th>Cargo</th><th style="width:90px">Temp</th>
+                <th style="width:110px">Target</th><th style="width:104px">Status</th><th style="width:88px">Updated</th>
+              </tr></thead>
+              <tbody id="cc-fleet"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-head"><h2>Action Required</h2><span class="count">transfer cargo</span></div>
+          <div id="cc-actions"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Fleet Health</h2></div>
+          <div class="gauge-body">
+            <div class="arc">
+              <svg viewBox="0 0 170 95">
+                <path d="M10 90 A75 75 0 0 1 160 90" fill="none" stroke="var(--panel-2)" stroke-width="12" stroke-linecap="round"/>
+                <path id="cc-arc" d="M10 90 A75 75 0 0 1 160 90" fill="none" stroke="var(--safe)" stroke-width="12" stroke-linecap="round" stroke-dasharray="236" stroke-dashoffset="236"/>
+              </svg>
+              <div class="arc-readout"><div class="lvl" id="cc-arc-pct">0%</div><div class="cap">units in range</div></div>
+            </div>
+            <div class="arc-scale"><span>0%</span><span>50%</span><span>100%</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>By Status</h2><span class="count">now</span></div>
+          <div class="bars" id="cc-bars"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Fleet Avg Temp</h2><span class="count">60 min</span></div>
+          <div class="spark">
+            <canvas id="cc-spark" width="600" height="140"></canvas>
+            <div class="legend"><span>-60m</span><span id="cc-spark-now">now</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot" id="cc-foot">COLDCHAIN &middot; SIMULATED TEST DATA</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== shared state =====
+  var timers = [];
+  var started = false;
+  var units = [];
+  var series = [];
+
+  function clearTimers() { timers.forEach(clearInterval); timers = []; }
+
+  // ===== data model (simulated test data) =====
+  var routes = ['Hwy 401 EB','QEW WB','Hwy 407','DVP NB','Hwy 400 NB','Gardiner','Hwy 404','Local GTA'];
+  var drivers = ['M. Khan','J. Park','A. Silva','R. Lee','D. Owusu','T. Nguyen','S. Patel','L. Moreau'];
+  var cargoTypes = [
+    { c: 'Insulin (vials)', band: [2, 8] },
+    { c: 'mRNA vaccine',    band: [-25, -15] },
+    { c: 'Biologics',       band: [2, 8] },
+    { c: 'Blood plasma',    band: [-30, -18] },
+    { c: 'GLP-1 pens',      band: [2, 8] },
+    { c: 'Antibiotics',     band: [2, 8] },
+    { c: 'Ophthalmic',      band: [2, 8] }
+  ];
+
+  function buildUnits() {
+    units = [];
+    for (var i = 0; i < 42; i++) {
+      var ct = cargoTypes[i % cargoTypes.length];
+      var mid = (ct.band[0] + ct.band[1]) / 2;
+      units.push({
+        id: 'VAN-' + String(101 + i),
+        driver: drivers[i % drivers.length],
+        cargo: ct.c, route: routes[i % routes.length],
+        lo: ct.band[0], hi: ct.band[1],
+        temp: mid + (Math.random() * 2 - 1),
+        offline: false, ageSec: 0
+      });
+    }
+    units[3].temp  = units[3].hi + 3.4;   // excursion
+    units[11].temp = units[11].hi + 2.1;  // excursion
+    units[7].temp  = units[7].hi + 0.6;   // warning
+    units[19].temp = units[19].hi + 0.4;  // warning
+    units[5].offline = true;
+  }
+
+  function classify(u) {
+    if (u.offline) return 'nd';
+    if (u.temp > u.hi || u.temp < u.lo) return 'exc';
+    if (Math.min(u.hi - u.temp, u.temp - u.lo) < 1.0) return 'warn';
+    return 'safe';
+  }
+  var LABELS = { safe: 'In range', warn: 'Warning', exc: 'Excursion', nd: 'No signal' };
+  var TEMPCLS = { safe: 'ok', warn: 'warn', exc: 'over', nd: '' };
+  var RANK = { exc: 0, warn: 1, nd: 2, safe: 3 };
+
+  function fmtTemp(t) { return (t >= 0 ? '+' : '') + t.toFixed(1) + '\u00B0C'; }
+  function fmtAge(s) { return s < 60 ? s + 's ago' : Math.floor(s / 60) + 'm ago'; }
+  function $(id) { return document.getElementById(id); }
+
+  // ===== render =====
+  function renderClock() {
+    var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); };
+    $('cc-clock').textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function renderKpis() {
+    var c = { safe: 0, warn: 0, exc: 0, nd: 0 };
+    units.forEach(function (u) { c[classify(u)]++; });
+    $('cc-k-total').textContent = units.length;
+    $('cc-k-safe').textContent = c.safe;
+    $('cc-k-warn').textContent = c.warn;
+    $('cc-k-exc').textContent = c.exc;
+    $('cc-k-nd').textContent = c.nd;
+    var live = units.length - c.nd;
+    var pct = live ? Math.round((c.safe / live) * 100) : 0;
+    $('cc-arc-pct').textContent = pct + '%';
+    var arc = $('cc-arc');
+    arc.style.transition = 'stroke-dashoffset 0.8s ease-out';
+    arc.style.strokeDashoffset = String(236 - 236 * (pct / 100));
+    arc.style.stroke = pct >= 80 ? 'var(--safe)' : pct >= 50 ? 'var(--warning)' : 'var(--excursion)';
+    $('cc-arc-pct').style.color = arc.style.stroke;
+
+    var bars = $('cc-bars'); bars.innerHTML = '';
+    var max = Math.max(c.safe, c.warn, c.exc, c.nd, 1);
+    [['In range', c.safe, 'var(--safe)'], ['Warning', c.warn, 'var(--warning)'],
+     ['Excursion', c.exc, 'var(--excursion)'], ['No signal', c.nd, 'var(--nodata)']].forEach(function (s) {
+      var row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = '<span class="name">' + s[0] + '</span><span class="num">' + s[1] + '</span>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + (s[1] / max * 100) + '%;background:' + s[2] + '"></div></div>';
+      bars.appendChild(row);
+    });
+  }
+
+  function renderFleet() {
+    var q = ($('cc-search').value || '').toLowerCase();
+    var sorted = units.slice().sort(function (a, b) { return RANK[classify(a)] - RANK[classify(b)]; });
+    var el = $('cc-fleet'); el.innerHTML = ''; var shown = 0;
+    sorted.forEach(function (u) {
+      if (q && (u.id + ' ' + u.cargo + ' ' + u.driver + ' ' + u.route).toLowerCase().indexOf(q) === -1) return;
+      var st = classify(u), tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="veh">' + u.id + '<small>' + u.driver + ' \u00B7 ' + u.route + '</small></td>' +
+        '<td class="cargo">' + u.cargo + '<small>target band</small></td>' +
+        '<td><span class="temp ' + TEMPCLS[st] + '">' + (u.offline ? '\u2014' : fmtTemp(u.temp)) + '</span></td>' +
+        '<td class="range">' + fmtTemp(u.lo) + ' to ' + fmtTemp(u.hi) + '</td>' +
+        '<td><span class="pill ' + st + '">' + LABELS[st] + '</span></td>' +
+        '<td class="updated">' + (u.offline ? '\u2014' : fmtAge(u.ageSec)) + '</td>';
+      el.appendChild(tr); shown++;
+    });
+    $('cc-rowcount').textContent = shown + ' of ' + units.length + ' units';
+  }
+
+  function renderActions() {
+    var bad = units.filter(function (u) { return classify(u) === 'exc'; });
+    var el = $('cc-actions'); el.innerHTML = '';
+    if (!bad.length) { el.innerHTML = '<div class="empty">No excursions. All cargo within safe limits.</div>'; return; }
+    bad.forEach(function (u) {
+      var over = (u.temp - u.hi).toFixed(1);
+      var row = document.createElement('div');
+      row.className = 'action-row';
+      row.innerHTML =
+        '<div class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>' +
+        '<div class="info"><b>' + u.id + ' \u00B7 ' + u.cargo + '</b><small>' + fmtTemp(u.temp) + ' \u00B7 ' + over + '\u00B0C over limit \u00B7 ' + u.route + '</small></div>' +
+        '<button class="btn" data-id="' + u.id + '">Transfer</button>';
+      el.appendChild(row);
+    });
+    el.querySelectorAll('.btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        alert('Transfer order initiated for ' + b.getAttribute('data-id') + '.\nNearest cold-storage hub will be dispatched.');
+      });
+    });
+  }
+
+  var cv, ctx, W, H;
+  function fleetAvg() {
+    var live = units.filter(function (u) { return !u.offline; });
+    return live.reduce(function (a, u) { return a + u.temp; }, 0) / live.length;
+  }
+  function drawSpark() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, W, H);
+    var max = Math.max.apply(null, series), min = Math.min.apply(null, series);
+    var pad = (max - min) * 0.3 + 0.5; max += pad; min -= pad;
+    var stepX = W / (series.length - 1);
+    var y = function (v) { return H - ((v - min) / (max - min)) * (H - 12) - 6; };
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, 'rgba(37,99,235,0.20)'); grad.addColorStop(1, 'rgba(37,99,235,0)');
+    ctx.beginPath(); ctx.moveTo(0, H);
+    series.forEach(function (v, i) { ctx.lineTo(i * stepX, y(v)); });
+    ctx.lineTo(W, H); ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath();
+    series.forEach(function (v, i) { i ? ctx.lineTo(i * stepX, y(v)) : ctx.moveTo(0, y(v)); });
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2; ctx.stroke();
+    $('cc-spark-now').textContent = fmtTemp(series[series.length - 1]);
+  }
+
+  function step() {
+    units.forEach(function (u) {
+      if (u.offline) return;
+      u.ageSec = 0;
+      u.temp += (classify(u) === 'exc') ? (Math.random() * 0.4 - 0.1) : (Math.random() * 0.6 - 0.3);
+      var mid = (u.lo + u.hi) / 2;
+      u.temp += (mid - u.temp) * 0.04;
+    });
+    series.shift(); series.push(fleetAvg());
+    renderKpis(); renderFleet(); renderActions(); drawSpark();
+  }
+
+  function renderAll() { renderClock(); renderKpis(); renderFleet(); renderActions(); drawSpark(); }
+
+  // ===== lifecycle =====
+  function start() {
+    cv = $('cc-spark'); ctx = cv.getContext('2d'); W = cv.width; H = cv.height;
+    if (!units.length) buildUnits();
+    series = [];
+    for (var i = 0; i < 60; i++) series.push(fleetAvg() + (Math.random() * 1.5 - 0.75));
+    $('cc-search').oninput = renderFleet;
+    renderAll();
+    clearTimers();
+    timers.push(setInterval(renderClock, 1000));
+    timers.push(setInterval(function () { units.forEach(function (u) { if (!u.offline) u.ageSec += 4; }); }, 4000));
+    timers.push(setInterval(step, 4000));
+    started = true;
+  }
+  function stop() { clearTimers(); started = false; }
+
+  // ===== mount: MyGeotab add-in OR standalone browser test =====
+  if (typeof geotab !== 'undefined') {
+    geotab.addin = geotab.addin || {};
+    geotab.addin.coldchainMonitor = function () {
+      return {
+        // api and freshState are provided by MyGeotab; we ignore them and use test data
+        initialize: function (api, freshState, callback) {
+          $('cc-foot').textContent = 'COLDCHAIN \u00B7 SIMULATED TEST DATA \u00B7 GEOTAB ADD-IN';
+          start();
+          if (typeof callback === 'function') callback();
+        },
+        focus: function () { if (!started) start(); else renderAll(); },
+        blur: function () { stop(); }
+      };
+    };
+  } else {
+    // opened directly in a browser for testing
+    if (document.readyState !== 'loading') start();
+    else document.addEventListener('DOMContentLoaded', start);
+  }
+
+})();
+</script>
+</body>
+</html>
